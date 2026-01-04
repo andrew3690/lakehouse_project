@@ -1,0 +1,40 @@
+---
+- name: Setup de Monitoramento (Glances + Reverse Proxy)
+  hosts: workers
+  gather_facts: no
+
+  tasks:
+    - name: 1. Instalar Compilador Rust (Necessário para FastAPI/Pydantic)
+      command: pkg install rust binutils -y
+      register: rust_install
+      changed_when: "'Installing' in rust_install.stdout"
+
+    - name: 2. Instalar Dependências Web (FastAPI) via PIP
+      # Aviso: Esta etapa pode demorar uns 5 a 10 minutos compilando!
+      command: pip install glances fastapi uvicorn packaging
+      register: pip_result
+      changed_when: "'Successfully installed' in pip_result.stdout"
+
+    - name: 3. Atualizar config do Nginx (Com Proxy Reverso)
+      copy:
+        src: nginx.conf
+        dest: /data/data/com.termux/files/usr/etc/nginx/nginx.conf
+        mode: '0600'
+      register: nginx_conf
+
+    - name: 4. Reiniciar Nginx (Para aplicar config)
+      shell: "pkill nginx; nginx"
+      when: nginx_conf.changed
+
+    - name: 5. Matar Glances antigo
+      shell: "pkill glances"
+      ignore_errors: yes
+
+    - name: 6. Iniciar Glances Web
+      shell: "nohup glances -w --disable-webui > /dev/null 2>&1 &"
+      async: 10
+      poll: 0
+
+    - name: 7. Validação
+      debug:
+        msg: "Acesse agora: http://192.168.15.7:8080/monitor/"

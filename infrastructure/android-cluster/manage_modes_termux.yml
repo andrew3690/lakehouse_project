@@ -1,0 +1,28 @@
+---
+- name: Configurar Modo do Cluster (Android/Termux Edition - FINAL)
+  hosts: cluster_nodes
+  gather_facts: no
+  vars:
+    spark_home: "/data/data/com.termux/files/home/spark-3.5.0-bin-hadoop3"
+    # IMPORTANTE: Aponte sempre para o IP do Wi-Fi
+    spark_master: "spark://192.168.15.9:7077"
+    mode: "none"
+
+  tasks:
+    # 1. CHECAGEM
+    - name: Verificar se Worker já existe
+      raw: "pgrep -f 'org.apache.spark.deploy.worker.Worker'"
+      register: worker_status
+      ignore_errors: yes
+      changed_when: false
+
+    # 2. LIGAR (Chamando o script local blindado)
+    - name: Iniciar Spark Worker
+      raw: "bash ~/start_worker.sh"
+      when: mode == "developer"
+
+    # 3. DESLIGAR
+    - name: Parar Spark Worker
+      raw: "pkill -f 'org.apache.spark.deploy.worker.Worker'"
+      ignore_errors: yes
+      when: mode != "developer"

@@ -1,0 +1,30 @@
+---
+- name: Resetar Ambiente (Shutdown de Serviços Pesados)
+  hosts: workers
+  gather_facts: no
+
+  tasks:
+    - name: 1. Derrubar Minecraft (Processo Java)
+      command: pkill java
+      ignore_errors: yes # Se já estiver desligado, não dá erro no Ansible
+      register: java_kill
+
+    - name: 2. Derrubar Túnel (Processo Playit)
+      command: pkill playit
+      ignore_errors: yes
+      register: playit_kill
+
+    - name: 3. Limpar sessões Screen órfãs
+      command: screen -wipe
+      ignore_errors: yes
+
+    - name: 4. Verificar se a carga baixou
+      command: uptime
+      register: uptime_now
+
+    - name: Relatório
+      debug:
+        msg: 
+          - "Minecraft parado? {{ 'Sim' if java_kill.changed else 'Já estava parado' }}"
+          - "Túnel parado? {{ 'Sim' if playit_kill.changed else 'Já estava parado' }}"
+          - "Status atual: {{ uptime_now.stdout }}"

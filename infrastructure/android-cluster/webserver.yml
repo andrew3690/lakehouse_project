@@ -1,0 +1,31 @@
+---
+- name: Deploy de Servidor Web (Nginx)
+  hosts: workers
+  gather_facts: no  # Desativado para agilidade
+
+  tasks:
+    - name: 1. Instalar Nginx
+      command: pkg install nginx -y
+      register: install_log
+      changed_when: "'Installing' in install_log.stdout"
+
+    - name: 2. Copiar index.html para o diretório padrão do Termux
+      copy:
+        src: index.html
+        # Caminho absoluto específico do Termux (não é /var/www/html)
+        dest: /data/data/com.termux/files/usr/share/nginx/html/index.html
+        mode: '0644'
+
+    - name: 3. Iniciar o Nginx (apenas se não estiver rodando)
+      shell: "pgrep nginx || nginx"
+      register: nginx_start
+      changed_when: "nginx_start.stdout == ''" 
+      # Se o pgrep falhou (código 1), executou o nginx (ou), então mudou o estado.
+
+    - name: 4. Teste de Fumaça (Curl Local)
+      command: curl -I http://localhost:8080
+      register: curl_result
+    
+    - name: Status Final
+      debug:
+        msg: "Nginx rodando! O servidor respondeu: {{ curl_result.stdout_lines[0] }}"

@@ -1,0 +1,54 @@
+---
+- name: Reparar Configuração do Nginx
+  hosts: workers
+  gather_facts: no
+
+  tasks:
+    - name: 1. Escrever nginx.conf Correto
+      copy:
+        dest: /data/data/com.termux/files/usr/etc/nginx/nginx.conf
+        content: |
+          worker_processes 1;
+          events { worker_connections 1024; }
+
+          http {
+              include mime.types;
+              default_type application/octet-stream;
+              sendfile on;
+              keepalive_timeout 65;
+
+              server {
+                  # O SEGREDO: Ouvir em 0.0.0.0 (Qualquer IP)
+                  listen 0.0.0.0:8080;
+                  server_name localhost;
+
+                  # Rota Principal (Monitoramento)
+                  location /monitor/ {
+                      # Redireciona para o Glances na porta 61208
+                      proxy_pass http://127.0.0.1:61208/;
+                      proxy_set_header Host $host;
+                      proxy_set_header X-Real-IP $remote_addr;
+                      
+                      # Corrige CSS/JS do Glances
+                      sub_filter_once off;
+                      sub_filter 'href="/' 'href="/monitor/';
+                      sub_filter 'src="/' 'src="/monitor/';
+                  }
+                  
+                  # Rota Raiz (Página de boas vindas simples)
+                  location / {
+                      return 200 'Cluster Node 1 (S10) - Online via Ansible!';
+                      add_header Content-Type text/plain;
+                  }
+              }
+          }
+
+    - name: 2. Reiniciar Monitoramento (Reload)
+      shell: "./start_monitor.sh"
+      args:
+        chdir: /data/data/com.termux/files/home/
+      register: restart_log
+
+    - name: 3. Status
+      debug:
+        msg: "Nginx reconfigurado. Tente acessar http://{{ ansible_host }}:8080/"

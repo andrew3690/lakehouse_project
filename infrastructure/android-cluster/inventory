@@ -1,0 +1,11 @@
+[cluster_nodes]
+# Nodo 1 (Xiaomi)
+192.168.15.101 ansible_user=u0_a240
+
+# Nodo 2 (Novo Slave) - Ajuste o usuário se não for u0_a182
+192.168.15.98  ansible_user=u0_a182
+
+[cluster_nodes:vars]
+ansible_port=8022
+# Argumentos extras para manter a conexão firme
+ansible_ssh_common_args='-o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ConnectTimeout=60'

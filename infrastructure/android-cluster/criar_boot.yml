@@ -1,0 +1,49 @@
+---
+- name: Criar Script de Boot (Modo User-Level)
+  hosts: workers
+  gather_facts: no
+
+  tasks:
+    - name: 1. Criar start_monitor.sh
+      copy:
+        dest: /data/data/com.termux/files/home/start_monitor.sh
+        mode: '0755'
+        content: |
+          #!/data/data/com.termux/files/usr/bin/bash
+
+          HOME_DIR="/data/data/com.termux/files/home"
+          BIN="/data/data/com.termux/files/usr/bin"
+
+          echo "1. Faxina (Root + User)..."
+          # Mata processos antigos (Root)
+          su -c "export HOME=$HOME_DIR; $BIN/pkill -9 -f glances" > /dev/null 2>&1
+          # Mata processos antigos (User)
+          $BIN/pkill -9 -f glances > /dev/null 2>&1
+          $BIN/pkill nginx || true
+          $BIN/screen -wipe > /dev/null 2>&1
+
+          echo "2. Iniciando Glances (Modo Usuário)..."
+          # MUDANÇA: Removemos o 'su -c'. Agora roda no mesmo nível do Nginx.
+          # O -B 127.0.0.1 garante que escuta localmente.
+          $BIN/screen -dmS monitor $BIN/glances -w -B 127.0.0.1
+
+          echo "3. Iniciando Nginx..."
+          $BIN/nginx
+
+          echo "Verificando..."
+          sleep 4
+          # Verifica processo do usuário (sem su)
+          $BIN/pgrep -a -f glances
+          $BIN/pgrep nginx
+
+          echo "Pronto. Se houver PIDs acima, acesse o navegador."
+
+    - name: 2. Reiniciar servicos
+      shell: "./start_monitor.sh"
+      args:
+        chdir: /data/data/com.termux/files/home/
+      register: run_log
+
+    - name: 3. Ver Log
+      debug:
+        msg: "{{ run_log.stdout_lines }}"

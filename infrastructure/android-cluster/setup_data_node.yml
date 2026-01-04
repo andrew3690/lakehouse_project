@@ -1,0 +1,37 @@
+---
+- name: Preparar Node para Engenharia de Dados (Versão Shell)
+  hosts: workers
+  gather_facts: no
+
+  tasks:
+    - name: 1. Atualizar Repositórios
+      shell: "pkg update -y && pkg upgrade -y"
+      ignore_errors: yes
+
+    - name: 2. Instalar Dependências de Sistema (Via Shell)
+      # Correção: Usamos 'shell' em vez de módulo 'pkg' inexistente
+      shell: "pkg install -y git tur-repo python-pip libxml2 libxslt clang make libjpeg-turbo"
+
+    - name: 3. Instalar Pandas e Numpy (Nativo do Termux)
+      # Isso é muito mais rápido que compilar via pip
+      shell: "pkg install -y python-numpy python-pandas"
+
+    - name: 4. Instalar Bibliotecas de Crawling via PIP
+      # Usando shell para garantir que ele usa o pip do ambiente correto
+      shell: "pip install requests beautifulsoup4 scrapy parsel tqdm"
+
+    - name: 5. Criar pasta de Projetos
+      file:
+        path: /data/data/com.termux/files/home/data_projects
+        state: directory
+        mode: '0755'
+
+    - name: 6. Verificar Instalação
+      shell: |
+        python -c "import pandas; print(f'Pandas: {pandas.__version__}')"
+        python -c "import scrapy; print(f'Scrapy: {scrapy.version_info}')"
+      register: version_check
+
+    - name: 7. Mostrar Versões Instaladas
+      debug:
+        msg: "{{ version_check.stdout_lines }}"

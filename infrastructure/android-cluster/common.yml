@@ -1,0 +1,25 @@
+---
+- name: Configuração Base dos Workers (Termux)
+  hosts: workers
+  gather_facts: no  # Mais rápido em celulares
+
+  tasks:
+    - name: 1. Atualizar a lista de pacotes (pkg update)
+      command: pkg update -y
+      register: update_log
+      changed_when: "'Upgrading' in update_log.stdout"
+
+    - name: 2. Instalar Kit de Sobrevivência DevOps
+      command: pkg install git htop neofetch vim nano tree -y
+      register: install_log
+      changed_when: "'Installing' in install_log.stdout"
+
+    - name: 3. Verificar Uptime (Tempo ligado)
+      command: uptime
+      register: uptime_result
+
+    - name: 4. Relatório Final
+      debug:
+        msg: 
+          - "Status: Configuração Concluída com Sucesso!"
+          - "Uptime do Node: {{ uptime_result.stdout }}"

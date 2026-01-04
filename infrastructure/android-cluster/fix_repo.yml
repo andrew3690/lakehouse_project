@@ -1,0 +1,24 @@
+---
+- name: Corrigir Repositórios do Termux
+  hosts: workers
+  gather_facts: no
+
+  tasks:
+    - name: 1. Forçar Mirror Oficial (Substituir sources.list)
+      copy:
+        dest: /data/data/com.termux/files/usr/etc/apt/sources.list
+        content: |
+          # Repositório Principal Oficial
+          deb https://packages.termux.dev/apt/termux-main stable main
+        mode: '0644'
+
+    - name: 2. Limpar Listas Corrompidas
+      shell: "rm -rf /data/data/com.termux/files/usr/var/lib/apt/lists/*"
+
+    - name: 3. Tentar Atualizar Agora (Update)
+      shell: "pkg update -y"
+      register: update_log
+
+    - name: 4. Debug do Update
+      debug:
+        msg: "{{ update_log.stdout_lines }}"
