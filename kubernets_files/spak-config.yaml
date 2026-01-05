@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spark-defaults
+data:
+  spark-defaults.conf: |
+    # --- Compatibilidade Android (Termux) ---
+    spark.io.compression.codec              lzf
+    spark.shuffle.compress                  false
+    spark.shuffle.spill.compress            false
+    spark.broadcast.compress                false
+    spark.shuffle.mapStatus.compression.codec lzf
+    spark.sql.parquet.compression.codec     gzip
+
+    # --- MinIO (S3) ---
+    spark.hadoop.fs.s3a.endpoint            http://192.168.15.9:9000
+    spark.hadoop.fs.s3a.path.style.access   true
+    spark.hadoop.fs.s3a.impl                org.apache.hadoop.fs.s3a.S3AFileSystem
+    spark.hadoop.fs.s3a.connection.ssl.enabled false
+    spark.hadoop.fs.s3a.access.key          minioadmin
+    spark.hadoop.fs.s3a.secret.key          minioadmin
+    spark.sql.warehouse.dir                 s3a://lakehouse/warehouse
+
+    # --- Metastore (Postgres) ---
+    spark.hadoop.javax.jdo.option.ConnectionURL jdbc:postgresql://metastore-service:5432/hive_metastore
+    spark.hadoop.javax.jdo.option.ConnectionDriverName org.postgresql.Driver
+    spark.hadoop.javax.jdo.option.ConnectionUserName postgres
+    spark.hadoop.javax.jdo.option.ConnectionPassword hive_password
+    spark.hadoop.datanucleus.schema.autoCreateAll true
+    spark.hadoop.hive.metastore.schema.verification false
+
+    # --- Jars e Drivers ---
+    spark.driver.extraClassPath             /app/postgresql-42.6.0.jar
+    spark.executor.extraClassPath           /app/postgresql-42.6.0.jar
+    spark.jars                              /app/postgresql-42.6.0.jar
+    spark.jars.packages                     io.delta:delta-spark_2.12:3.0.0,org.apache.hadoop:hadoop-aws:3.3.4
+    spark.sql.extensions                    io.delta.sql.DeltaSparkSessionExtension
+    spark.sql.catalog.spark_catalog         org.apache.spark.sql.delta.catalog.DeltaCatalog

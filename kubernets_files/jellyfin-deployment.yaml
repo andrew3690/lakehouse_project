@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jellyfin
+  labels:
+    app: jellyfin
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jellyfin
+  template:
+    metadata:
+      labels:
+        app: jellyfin
+    spec:
+      containers:
+      - name: jellyfin
+        image: jellyfin/jellyfin:latest
+        ports:
+        - containerPort: 8096
+        volumeMounts:
+        - name: media-storage
+          mountPath: /media  # Onde o Jellyfin vai procurar filmes
+        - name: jellyfin-config
+          mountPath: /config # Para salvar configurações se reiniciar
+      volumes:
+      - name: media-storage
+        hostPath:
+          path: /mnt/cluster/s10_01/homelab_media # <--- O PULO DO GATO: Aponta para o S10
+      - name: jellyfin-config
+        hostPath:
+          path: /home/andre/jellyfin_config # Salva configs no disco do notebook
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jellyfin-service
+spec:
+  type: LoadBalancer # Permite acessar via IP da rede
+  selector:
+    app: jellyfin
+  ports:
+    - protocol: TCP
+      port: 8096
+      targetPort: 8096

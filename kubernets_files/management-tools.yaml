@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudbeaver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloudbeaver
+  template:
+    metadata:
+      labels:
+        app: cloudbeaver
+    spec:
+      hostNetwork: true # Usa IP do PC (Acessível em :8978)
+      containers:
+      - name: cloudbeaver
+        image: dbeaver/cloudbeaver:23.3.0
+        volumeMounts:
+        - mountPath: /opt/cloudbeaver/workspace
+          name: cloudbeaver-data
+      volumes:
+      - name: cloudbeaver-data
+        hostPath:
+          path: /home/andre/lakehouse_data/cloudbeaver
+          type: DirectoryOrCreate
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vscode-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vscode-server
+  template:
+    metadata:
+      labels:
+        app: vscode-server
+    spec:
+      hostNetwork: true # (Acessível em :8443)
+      containers:
+      - name: vscode-server
+        image: lscr.io/linuxserver/code-server:latest
+        env:
+        - name: PUID
+          value: "1000"
+        - name: PGID
+          value: "1000"
+        - name: TZ
+          value: "America/Sao_Paulo"
+        - name: PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: lakehouse-secrets
+              key: VSCODE_PASSWORD # Senha para acessar o VS Code
+        volumeMounts:
+        - mountPath: /config
+          name: vscode-config
+        - mountPath: /home/coder/project
+          name: project-data
+      volumes:
+      - name: vscode-config
+        hostPath:
+          path: /home/andre/lakehouse_data/vscode_config
+          type: DirectoryOrCreate
+      - name: project-data
+        hostPath:
+          path: /home/andre/lakehouse_project
+          type: Directory

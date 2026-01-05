@@ -1,0 +1,91 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jupyter-lakehouse
+  labels:
+    app: jupyter-lakehouse
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jupyter-lakehouse
+  template:
+    metadata:
+      labels:
+        app: jupyter-lakehouse
+    spec:
+      # Conta de serviço que permite ao Jupyter criar pods de executores Spark
+      serviceAccountName: spark 
+      containers:
+      - name: jupyter
+        image: andrebreis/spark-master:3.5.0
+        # Comando para iniciar o Jupyter Lab sem token e permitindo root
+        command: ["/bin/bash", "-c", "jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root --NotebookApp.token=''"]
+        
+        # --- BLOCO DE VARIAVEIS DE AMBIENTE (SEU PORTFÓLIO AGRADECE) ---
+        env:
+        # Configs do Cluster Spark
+        - name: SPARK_MASTER_HOST
+          value: "spark-master-service"
+        - name: SPARK_MASTER_PORT
+          value: "7077"
+        
+        # Configs do Metastore (AQUI FICA A INTELIGÊNCIA PORTÁVEL)
+        - name: METASTORE_HOST
+          value: "10.43.47.107" # <--- SE O IP MUDAR, TROQUE APENAS AQUI!
+        - name: METASTORE_PORT
+          value: "5432"
+        - name: METASTORE_DB
+          value: "hive_metastore"
+        - name: METASTORE_USER
+          value: "postgres"
+        - name: METASTORE_PASSWORD
+          value: "hive_password"
+          
+        # Configs do Warehouse
+        - name: WAREHOUSE_DIR
+          value: "s3a://lakehouse/warehouse/"
+        # ---------------------------------------------------------------
+
+        ports:
+        - containerPort: 8888 # Porta do Jupyter
+        - containerPort: 4040 # Porta da UI do Spark (Driver)
+        
+        volumeMounts:
+        # Persistência dos seus Notebooks (pasta work)
+        - name: notebook-storage
+          mountPath: /opt/spark/work
+        # Configurações globais do Spark (Log4j, Defaults, etc)
+        - name: spark-conf
+          mountPath: /opt/spark/conf/spark-defaults.conf
+          subPath: spark-defaults.conf
+
+      volumes:
+      - name: notebook-storage
+        persistentVolumeClaim:
+          claimName: spark-pvc
+      - name: spark-conf
+        configMap:
+          name: spark-config
+
+---
+# Serviço para expor o Jupyter e o Spark UI para o seu PC (Host)
+apiVersion: v1
+kind: Service
+metadata:
+  name: jupyter-lakehouse-service
+spec:
+  type: NodePort
+  selector:
+    app: jupyter-lakehouse
+  ports:
+  - name: jupyter
+    protocol: TCP
+    port: 8888
+    targetPort: 8888
+    nodePort: 30088 # Acesse via http://localhost:30088
+  - name: spark-ui
+    protocol: TCP
+    port: 4040
+    targetPort: 4040
+    nodePort: 30040 # Acesse via http://localhost:30040 (quando tiver job rodando)

@@ -1,0 +1,51 @@
+# --- 1. Credenciais e Segredos (CRÍTICO) ---
+.env
+**/.env
+*.pem
+*.key
+id_rsa
+id_rsa.pub
+kubeconfig
+secrets.yaml
+
+# --- 2. Python & Ambiente Virtual ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv_312/
+venv/
+.venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# --- 3. Spark & Metastore Local ---
+spark-warehouse/
+metastore_db/
+derby.log
+*.log
+
+# --- 4. Jupyter Notebooks ---
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/
+
+# --- 5. Arquivos de IDE e Sistema ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- 6. Dados Temporários/Logs ---
+*.tmp
+worker.log
+worker_pc.log
+worker_pc_ip.log	
+
+# -- 7. Drivers Desncessários --
+postgresql-42.6.0.jar
+
+# -- 8. Integração de ferramentas de IA retiradas --
+.zencoder/
+.zenflow/

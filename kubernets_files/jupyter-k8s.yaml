@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jupyter-lakehouse
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jupyter
+  template:
+    metadata:
+      labels:
+        app: jupyter
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+      - name: jupyter
+        image: lakehouse-jupyter:v1
+        imagePullPolicy: Never
+        workingDir: /app
+        env:
+        # Variáveis de Caminho do Python (Críticas para o Cluster Híbrido)
+        - name: DRIVER_PYTHON_PATH
+          value: "/usr/local/bin/python"
+        - name: WORKER_PYTHON_PATH
+          value: "/data/data/com.termux/files/usr/bin/python"
+          
+        # Injeta as credenciais e IPs do Secret
+        envFrom:
+        - secretRef:
+            name: lakehouse-env-secret
+
+        volumeMounts:
+        # Persistência dos Notebooks
+        - mountPath: /app
+          name: notebook-storage
+        
+        # Chaves SSH para falar com o Android
+        - mountPath: /root/.ssh
+          name: ssh-keys
+          
+        # >>> A INJEÇÃO CIRÚRGICA DA CONFIGURAÇÃO <<<
+        # Colocamos o arquivo direto na pasta onde o PySpark 3.12 mora
+        - mountPath: /usr/local/lib/python3.12/site-packages/pyspark/conf/spark-defaults.conf
+          name: spark-config-volume
+          subPath: spark-defaults.conf
+
+      volumes:
+      - name: notebook-storage
+        hostPath:
+          path: /home/andre/lakehouse_project
+          type: Directory
+      
+      - name: ssh-keys
+        hostPath:
+          path: /home/andre/.ssh
+          type: Directory
+          
+      # Volume que pega os dados do ConfigMap que criamos
+      - name: spark-config-volume
+        configMap:
+          name: spark-defaults
