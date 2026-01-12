@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pihole
+  labels:
+    app: pihole
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pihole
+  template:
+    metadata:
+      labels:
+        app: pihole
+    spec:
+      containers:
+      - name: pihole
+        image: pihole/pihole:latest
+        env:
+        - name: TZ
+          value: "America/Sao_Paulo"
+        - name: WEBPASSWORD
+          value: "and010500" # <--- Defina sua senha aqui
+        - name: VIRTUAL_HOST
+          value: "192.168.15.9"
+        ports:
+        - containerPort: 53
+          name: dns
+          protocol: UDP
+        - containerPort: 53
+          name: dns-tcp
+          protocol: TCP
+        - containerPort: 80
+          name: web
+          protocol: TCP
+        volumeMounts:
+        - name: etc-pihole
+          mountPath: /etc/pihole
+        - name: etc-dnsmasq
+          mountPath: /etc/dnsmasq.d
+      volumes:
+      - name: etc-pihole
+        hostPath:
+          path: /home/andre/lakehouse_project/pihole_data/etc-pihole
+      - name: etc-dnsmasq
+        hostPath:
+          path: /home/andre/lakehouse_project/pihole_data/etc-dnsmasq.d
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pihole-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: pihole
+  ports:
+    - protocol: UDP
+      port: 53
+      targetPort: 53
+      name: dns-udp
+    - protocol: TCP
+      port: 53
+      targetPort: 53
+      name: dns-tcp
+    - protocol: TCP
+      port: 8081      # Porta externa (no seu navegador)
+      targetPort: 80  # Porta interna (no container)
+      name: web

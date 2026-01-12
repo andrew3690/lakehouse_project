@@ -17,27 +17,41 @@ spec:
       containers:
       - name: jellyfin
         image: jellyfin/jellyfin:latest
+        imagePullPolicy: Always
+        env:
+        - name: TZ
+          value: "America/Sao_Paulo"
         ports:
         - containerPort: 8096
+          name: http
+          protocol: TCP
         volumeMounts:
-        - name: media-storage
-          mountPath: /media  # Onde o Jellyfin vai procurar filmes
         - name: jellyfin-config
-          mountPath: /config # Para salvar configurações se reiniciar
+          mountPath: /config
+        - name: jellyfin-cache
+          mountPath: /cache
+        - name: media-storage
+          mountPath: /media # <-- Lê a mesma pasta do torrent
       volumes:
-      - name: media-storage
-        hostPath:
-          path: /mnt/cluster/s10_01/homelab_media # <--- O PULO DO GATO: Aponta para o S10
       - name: jellyfin-config
         hostPath:
-          path: /home/andre/jellyfin_config # Salva configs no disco do notebook
+          path: /home/andre/lakehouse_project/jellyfin_data/config
+          type: DirectoryOrCreate
+      - name: jellyfin-cache
+        hostPath:
+          path: /home/andre/lakehouse_project/jellyfin_data/cache
+          type: DirectoryOrCreate
+      - name: media-storage
+        hostPath:
+          path: /home/andre/lakehouse_project/media_data
+          type: DirectoryOrCreate
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: jellyfin-service
 spec:
-  type: LoadBalancer # Permite acessar via IP da rede
+  type: LoadBalancer
   selector:
     app: jellyfin
   ports:

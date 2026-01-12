@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: homepage
+  labels:
+    app: homepage
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: homepage
+  template:
+    metadata:
+      labels:
+        app: homepage
+    spec:
+      serviceAccountName: homepage-sa
+      containers:
+      - name: homepage
+        image: ghcr.io/gethomepage/homepage:latest
+        ports:
+        - containerPort: 3000
+          name: http
+        volumeMounts:
+        - name: config
+          mountPath: /app/config
+        env:
+          # Permite comunicação com o Kubernetes
+          - name: HOMEPAGE_VAR_K8S_IN_CLUSTER
+            value: "true"
+          # CORREÇÃO DO ERRO: Libera o acesso para qualquer host (LAN, Tailscale, localhost)
+          - name: HOMEPAGE_ALLOWED_HOSTS
+            value: "*"
+          # GARANTIA DOS LINKS: Define o IP aqui para usar {{HOMEPAGE_VAR_HOST_IP}}
+          - name: HOMEPAGE_VAR_HOST_IP
+            value: "192.168.15.9"
+      volumes:
+      - name: config
+        hostPath:
+          path: /home/andre/lakehouse_project/homepage_config
+          type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: homepage-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: homepage
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000

@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prowlarr
+  labels:
+    app: prowlarr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prowlarr
+  template:
+    metadata:
+      labels:
+        app: prowlarr
+    spec:
+      containers:
+      - name: prowlarr
+        image: lscr.io/linuxserver/prowlarr:latest
+        env:
+        - name: TZ
+          value: "America/Sao_Paulo"
+        ports:
+        - containerPort: 9696
+          name: http
+        volumeMounts:
+        - name: prowlarr-config
+          mountPath: /config
+      volumes:
+      - name: prowlarr-config
+        hostPath:
+          path: /home/andre/lakehouse_project/prowlarr_data
+          type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prowlarr-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: prowlarr
+  ports:
+    - protocol: TCP
+      port: 9696
+      targetPort: 9696

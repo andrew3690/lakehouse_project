@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spark-worker-local
+  labels:
+    app: spark-worker-local
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spark-worker-local
+  template:
+    metadata:
+      labels:
+        app: spark-worker-local
+    spec:
+      containers:
+      - name: worker
+        image: lakehouse-spark:v1  # <--- IMAGEM NOVA
+        imagePullPolicy: Never     # <--- OBRIGATÓRIO
+        
+        # COMANDO SIMPLIFICADO! 
+        # Como definimos o PATH no Dockerfile, não precisamos mais do caminho gigante
+        command:
+        - "/bin/bash"
+        - "-c"
+        - "spark-class org.apache.spark.deploy.worker.Worker spark://spark-master-service:7077"
+        
+        env:
+        - name: SPARK_WORKER_MEMORY
+          value: "4g"
+        - name: SPARK_WORKER_CORES
+          value: "2"
+        
+        resources:
+          requests:
+            memory: "4.5Gi"
+            cpu: "1"
+          limits:
+            memory: "5Gi"
+            cpu: "3"
+
+        volumeMounts:
+        - name: notebook-storage
+          mountPath: /opt/spark/work
+          
+      volumes:
+      - name: notebook-storage
+        persistentVolumeClaim:
+          claimName: spark-pvc

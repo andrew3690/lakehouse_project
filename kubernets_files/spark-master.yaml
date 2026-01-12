@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: spark-master
-  namespace: data-ops
+  namespace: default
 spec:
   replicas: 1
   selector:
@@ -28,8 +28,8 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: spark-master-svc
-  namespace: data-ops
+  name: spark-master-service
+  namespace: default
 spec:
   type: LoadBalancer
   selector:
@@ -38,6 +38,8 @@ spec:
     - name: cluster
       port: 7077
       targetPort: 7077
+      nodePort: 30077
     - name: webui
       port: 8080
       targetPort: 8080
+      nodePort: 30080

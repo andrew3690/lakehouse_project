@@ -1,0 +1,49 @@
+apiVersion: apps/v1 # Para aplicar --> kubectl apply -f factorio.yaml
+kind: Deployment
+metadata:
+  name: factorio
+  labels:
+    app: factorio
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: factorio
+  template:
+    metadata:
+      labels:
+        app: factorio
+    spec:
+      containers:
+      - name: factorio
+        image: factoriotools/factorio:stable
+        ports:
+        - containerPort: 34197 # Porta padrão do Factorio (UDP)
+          name: game-udp
+          protocol: UDP
+        volumeMounts:
+        - name: factorio-data
+          mountPath: /factorio
+        resources:
+          requests:
+            memory: "1Gi"
+          limits:
+            memory: "2Gi"
+      volumes:
+      - name: factorio-data
+        hostPath:
+          path: /home/andre/lakehouse_project/games_data/factorio
+          type: DirectoryOrCreate # Cria a pasta se não existir
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: factorio-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: factorio
+  ports:
+    - protocol: UDP
+      port: 34197
+      targetPort: 34197

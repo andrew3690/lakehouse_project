@@ -1,0 +1,46 @@
+apiVersion: apps/v1 # Para aplicar --> kubectl apply -f terraria.yaml
+kind: Deployment
+metadata:
+  name: terraria
+  labels:
+    app: terraria
+spec:
+  replicas: 0 # Começa desligado
+  selector:
+    matchLabels:
+      app: terraria
+  template:
+    metadata:
+      labels:
+        app: terraria
+    spec:
+      containers:
+      - name: terraria
+        image: tylerotoole/terraria-server:latest
+        ports:
+        - containerPort: 7777
+          protocol: TCP
+        env:
+        - name: WORLD_NAME
+          value: "AndrewWorld"
+        volumeMounts:
+        - name: terraria-data
+          mountPath: /root/.local/share/Terraria/Worlds
+      volumes:
+      - name: terraria-data
+        hostPath:
+          path: /home/andre/lakehouse_project/games_data/terraria
+          type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: terraria-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: terraria
+  ports:
+    - protocol: TCP
+      port: 7777
+      targetPort: 7777

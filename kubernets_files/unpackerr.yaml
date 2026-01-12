@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: unpackerr
+  labels:
+    app: unpackerr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: unpackerr
+  template:
+    metadata:
+      labels:
+        app: unpackerr
+    spec:
+      containers:
+      - name: unpackerr
+        image: golift/unpackerr:latest
+        env:
+        - name: TZ
+          value: "America/Sao_Paulo"
+        # Configuração do qBittorrent
+        - name: UN_QBITTORRENT_0_URL
+          value: "http://qbittorrent-service:8080" # Nome do serviço interno do K8s
+        - name: UN_QBITTORRENT_0_USER
+          value: "admin"
+        - name: UN_QBITTORRENT_0_PASS
+          value: "GzgX6w8pq" # <--- Coloque sua senha do qBittorrent aqui
+        - name: UN_QBITTORRENT_0_DELETE_ORIG
+          value: "false"      # Mude para true se quiser deletar o .rar após extrair
+        volumeMounts:
+        - name: media-data
+          mountPath: /data
+      volumes:
+      - name: media-data
+        hostPath:
+          path: /home/andre/lakehouse_project/media_data
+          type: Directory

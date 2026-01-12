@@ -1,0 +1,56 @@
+apiVersion: apps/v1 # Para aplicar --> kubectl apply -f zomboid.yaml
+kind: Deployment
+metadata:
+  name: zomboid
+  labels:
+    app: zomboid
+spec:
+  replicas: 0 # Começa desligado
+  selector:
+    matchLabels:
+      app: zomboid
+  template:
+    metadata:
+      labels:
+        app: zomboid
+    spec:
+      containers:
+      - name: zomboid
+        image: renegademaster/zomboid-dedicated-server:latest
+        ports:
+        - containerPort: 16261
+          protocol: UDP
+        - containerPort: 16262
+          protocol: UDP
+        env:
+        - name: ADMINPASSWORD
+          value: "admin123" # Troque a senha
+        - name: EZCONF_SERVER_NAME
+          value: "AndrewServer"
+        resources:
+          requests:
+            memory: "4Gi" # Zomboid é faminto!
+        volumeMounts:
+        - name: zomboid-data
+          mountPath: /home/steam/Zomboid
+      volumes:
+      - name: zomboid-data
+        hostPath:
+          path: /home/andre/lakehouse_project/games_data/zomboid
+          type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zomboid-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: zomboid
+  ports:
+    - protocol: UDP
+      port: 16261
+      targetPort: 16261
+    - protocol: UDP
+      port: 16262
+      targetPort: 16262

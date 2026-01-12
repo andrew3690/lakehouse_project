@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qbittorrent
+  labels:
+    app: qbittorrent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: qbittorrent
+  template:
+    metadata:
+      labels:
+        app: qbittorrent
+    spec:
+      containers:
+      - name: qbittorrent
+        image: lscr.io/linuxserver/qbittorrent:latest
+        imagePullPolicy: Always
+        env:
+        - name: PUID
+          value: "1000"
+        - name: PGID
+          value: "1000"
+        - name: TZ
+          value: "America/Sao_Paulo"
+        - name: WEBUI_PORT
+          value: "8080"
+        ports:
+        - containerPort: 8080
+          name: webui
+          protocol: TCP
+        - containerPort: 6881
+          name: bittorrent-tcp
+          protocol: TCP
+        - containerPort: 6881
+          name: bittorrent-udp
+          protocol: UDP
+        volumeMounts:
+        - name: qbittorrent-config
+          mountPath: /config
+        - name: media-storage
+          mountPath: /data # <-- O segredo da integração
+      volumes:
+      - name: qbittorrent-config
+        hostPath:
+          path: /home/andre/lakehouse_project/torrent_data/config
+          type: DirectoryOrCreate
+      - name: media-storage
+        hostPath:
+          path: /home/andre/lakehouse_project/media_data
+          type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qbittorrent-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: qbittorrent
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+      name: webui
+    - protocol: TCP
+      port: 6881
+      targetPort: 6881
+      name: bittorrent-tcp
+    - protocol: UDP
+      port: 6881
+      targetPort: 6881
+      name: bittorrent-udp

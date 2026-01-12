@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: spark-pvc
+  labels:
+    app: jupyter-lakehouse
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  # Se estiver usando K3s, o storageClassName padrão (local-path) é automático.
+  # Se não funcionar, descomente a linha abaixo:
+  # storageClassName: local-path
