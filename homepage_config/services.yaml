@@ -76,3 +76,13 @@
         widget:
           type: minecraft
           url: minecraft-service:25565
+
+
+- AI Laboratory:
+    - Open WebUI:
+        icon: open-webui.png # O Homepage baixa sozinho se não tiver, ou use 'chatgpt.png'
+        href: http://{{HOMEPAGE_VAR_HOST_IP}}:3000
+        description: Chat com LLMs Locais
+        server:
+          name: open-webui-service
+          namespace: default
