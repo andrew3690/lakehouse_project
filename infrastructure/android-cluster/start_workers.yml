@@ -1,0 +1,49 @@
+---
+- name: Ligar Spark Workers no Termux (Conectado ao K8s)
+  hosts: cluster_nodes
+  gather_facts: no
+  vars:
+    spark_version: "3.5.0"
+    base_dir: "/data/data/com.termux/files/home"
+    spark_dir: "{{ base_dir }}/spark-{{ spark_version }}-bin-hadoop3"
+    spark_url: "https://archive.apache.org/dist/spark/spark-{{ spark_version }}/spark-{{ spark_version }}-bin-hadoop3.tgz"
+
+  tasks:
+    - name: 1. Verificar se pasta do Spark existe
+      stat:
+        path: "{{ spark_dir }}"
+      register: spark_folder
+
+    - name: 2. Baixar Spark (apenas se não existir)
+      shell: |
+        curl -O {{ spark_url }}
+        tar -xzf spark-{{ spark_version }}-bin-hadoop3.tgz
+        rm spark-{{ spark_version }}-bin-hadoop3.tgz
+      args:
+        chdir: "{{ base_dir }}"
+      when: not spark_folder.stat.exists
+
+    - name: 3. Derrubar Workers antigos (Evitar duplicatas)
+      shell: "pkill -f 'org.apache.spark.deploy.worker.Worker' || true"
+      ignore_errors: yes
+
+    - name: 4. Iniciar Worker (Conectando ao PC)
+      shell: |
+        export JAVA_HOME=/data/data/com.termux/files/usr/lib/jvm/java-17-openjdk
+        export SPARK_HOME={{ spark_dir }}
+        
+        # Inicia em background (nohup) apontando para o Master no Kubernetes
+        nohup $SPARK_HOME/bin/spark-class org.apache.spark.deploy.worker.Worker \
+          --cores {{ spark_cores }} \
+          --memory {{ spark_mem }} \
+          {{ spark_master_url }} > worker.log 2>&1 &
+      args:
+        chdir: "{{ spark_dir }}"
+
+    - name: 5. Validar
+      shell: "pgrep -f 'Worker'"
+      register: worker_pid
+
+    - name: Status
+      debug:
+        msg: "Worker Android rodando (PID {{ worker_pid.stdout }}) conectado em {{ spark_master_url }}"

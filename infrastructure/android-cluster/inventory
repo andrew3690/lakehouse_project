@@ -1,11 +1,15 @@
 [cluster_nodes]
-# Nodo 1 (Xiaomi)
-192.168.15.101 ansible_user=u0_a240
+# Nodo 1 (Xiaomi) - Ex: 4GB RAM total, usamos 3GB pro Spark
+192.168.15.101 ansible_user=u0_a240 spark_mem=2g spark_cores=4
 
-# Nodo 2 (Novo Slave) - Ajuste o usuário se não for u0_a182
-192.168.15.98  ansible_user=u0_a182
+# Nodo 2 (Novo Slave) - Ex: 4GB RAM total, usamos 3GB pro Spark
+192.168.15.98  ansible_user=u0_a182 spark_mem=6g spark_cores=4
 
 [cluster_nodes:vars]
 ansible_port=8022
 # Argumentos extras para manter a conexão firme
 ansible_ssh_common_args='-o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ConnectTimeout=60'
+
+# AQUI ESTÁ O PULO DO GATO:
+# O IP do seu PC (Kubernetes) + A porta NodePort do Spark Master (que vimos no 'kubectl get svc')
+spark_master_url=spark://192.168.15.9:30077

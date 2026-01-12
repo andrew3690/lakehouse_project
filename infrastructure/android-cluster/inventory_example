@@ -1,0 +1,18 @@
+[cluster_nodes]
+# Node 1 (Xiaomi) - Ex: 4GB RAM total, using 2GB for Spark
+192.168.XX.XXXX ansible_user=<user_example> spark_mem=2g spark_cores=4
+
+# Node 2 (Samsung S10) - Ex: 8GB RAM total, using 6GB pro Spark
+192.168.XX.XXXX  ansible_user=<user_example> spark_mem=6g spark_cores=4
+
+# Node 3 (Samsung S10) - Ex: 8GB RAM total, using 6GB pro Spark
+192.168.XX.XXXX  ansible_user=<user_example> spark_mem=6g spark_cores=4
+
+[cluster_nodes:vars]
+ansible_port=8022 --> Generally 
+ansible_python_interpreter=/data/data/com.termux/files/usr/bin/python --> Python Path
+# Extra config args for keeping a strong connection
+ansible_ssh_common_args='-o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ConnectTimeout=60'
+
+# Node Port for Spark Master 
+spark_master_url=spark://192.168.XX.XXXX:30077

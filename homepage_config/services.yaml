@@ -1,0 +1,78 @@
+---
+- Media Center:
+    - Jellyfin:
+        icon: jellyfin.png
+        href: http://{{HOMEPAGE_VAR_HOST_IP}}:8096
+        description: Streaming
+        server:
+          name: jellyfin-service # Monitora se o pod está vivo
+          namespace: default
+
+    - Sonarr:
+        icon: sonarr.png
+        href: http://{{HOMEPAGE_VAR_HOST_IP}}:8989
+        description: Séries
+        widget:
+          type: sonarr
+          url: http://sonarr-service:8989 # Conexão interna rápida
+          key: SUA_API_KEY_AQUI # Pegue em Settings > General no Sonarr
+
+    - Prowlarr:
+        icon: prowlarr.png
+        href: http://{{HOMEPAGE_VAR_HOST_IP}}:9696
+        description: Indexadores
+        server:
+          name: prowlarr-service
+          namespace: default
+
+    - qBittorrent:
+        icon: qbittorrent.png
+        href: http://{{HOMEPAGE_VAR_HOST_IP}}:30803 # Porta NodePort segura
+        description: Downloads
+        widget:
+          type: qbittorrent
+          url: http://qbittorrent-service:8080
+          username: admin
+          password: adminadmin # Ou sua senha nova
+
+- Data & Dev:
+    - Jupyter Lab:
+        icon: jupyter.png
+        href: http://{{HOMEPAGE_VAR_HOST_IP}}:8888
+        description: Data Science
+        server:
+          name: jupyter-lakehouse-service
+          namespace: default
+
+    - Spark Master:
+        icon: apache-spark.png
+        href: http://{{HOMEPAGE_VAR_HOST_IP}}:8080
+        description: Cluster Manager
+        server:
+          name: spark-master-service
+          namespace: default
+
+    - MinIO:
+        icon: minio.png
+        href: http://{{HOMEPAGE_VAR_HOST_IP}}:9001
+        description: S3 Storage
+        server:
+          name: minio-service
+          namespace: default
+
+- Infraestrutura:
+    - Pi-hole:
+        icon: pi-hole.png
+        href: http://{{HOMEPAGE_VAR_HOST_IP}}:8081/admin
+        widget:
+          type: pihole
+          url: http://pihole-service:80 # Internamente ele ouve na 80
+          key: "" # Opcional: API Key do Pihole para ver estatísticas
+
+    - Minecraft:
+        icon: minecraft.png
+        href: # Sem link
+        description: "IP: 100.120.162.126"
+        widget:
+          type: minecraft
+          url: minecraft-service:25565
