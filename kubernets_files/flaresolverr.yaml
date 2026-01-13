@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flaresolverr
+  labels:
+    app: flaresolverr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flaresolverr
+  template:
+    metadata:
+      labels:
+        app: flaresolverr
+    spec:
+      containers:
+      - name: flaresolverr
+        image: flaresolverr/flaresolverr:latest
+        ports:
+        - containerPort: 8191
+        resources:
+          # FlareSolverr usa um navegador, então consome um pouco mais de RAM
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "1024Mi" # Limite seguro para evitar OOM no nó
+            cpu: "1000m"
+        env:
+        - name: LOG_LEVEL
+          value: info
+        - name: TZ
+          value: America/Sao_Paulo
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flaresolverr-service
+spec:
+  selector:
+    app: flaresolverr
+  ports:
+    - protocol: TCP
+      port: 8191
+      targetPort: 8191
+  type: ClusterIP # Não precisa expor para fora, apenas o Prowlarr precisa ver

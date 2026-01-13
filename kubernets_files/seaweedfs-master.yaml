@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: seaweedfs-master
+  labels:
+    app: seaweedfs-master
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: seaweedfs-master
+  template:
+    metadata:
+      labels:
+        app: seaweedfs-master
+    spec:
+      containers:
+      - name: seaweedfs-master
+        image: chrislusf/seaweedfs:latest
+        ports:
+        - containerPort: 9333
+          name: swfs-master
+        - containerPort: 19333
+          name: swfs-grpc
+        command:
+          - "weed"
+          - "master"
+          - "-mdir=/data"
+          - "-ip=0.0.0.0" # Importante: Define o IP que os outros nodes devem buscar
+          - "-defaultReplication=000"
+          - "-volumeSizeLimitMB=1000" # Tamanho de cada "chunk" (1GB é um bom padrão)
+        volumeMounts:
+        - name: seaweedfs-master-storage
+          mountPath: /data
+      volumes:
+      - name: seaweedfs-master-storage
+        hostPath:
+          path: /home/andre/lakehouse_project/seaweedfs_data/master
+          type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: seaweedfs-master-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: seaweedfs-master
+  ports:
+    - protocol: TCP
+      port: 9333
+      targetPort: 9333
+      name: swfs-master
+    - protocol: TCP
+      port: 19333
+      targetPort: 19333
+      name: swfs-grpc

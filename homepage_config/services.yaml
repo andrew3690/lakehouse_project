@@ -86,3 +86,9 @@
         server:
           name: open-webui-service
           namespace: default
+
+- Storage & Infra:
+    - SeaweedFS Master:
+        icon: seaweedfs.png # (Se não tiver, ele usa padrão ou coloque um icone de HD)
+        href: http://{{HOMEPAGE_VAR_HOST_IP}}:9333
+        description: Gerenciador de Storage Distribuído
